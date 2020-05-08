@@ -5,14 +5,19 @@ const MEMBER_TYPE_CLOSE_TAG = '</a></p>';
 const CATEGORY_DATA = {
     associate: {
         taxID: 4543,
-        toggleClass: 'showchar'
+        toggleClass: 'showchar',
+        orderby: 'title'
     },
     full: {
         taxID: 4544,
-        toggleClass: 'showcountry'
+        toggleClass: 'showcountry',
+        orderby: 'country'
     }
 };
 const PER_PAGE = 48;
+const ALPHA_ARR = [...Array(26)].map((val, i) => String.fromCharCode(i + 65));
+const ALPHA_NUM_ARR = ['num', ...ALPHA_ARR];
+
 let ENDPOINT_BASE = `${window.location.protocol}//${window.location.hostname}/membership/wp-json/wp/v2/organisation/`;
 let CONTAINER;
 let MEMBER_TYPE = 'associate';
@@ -29,17 +34,13 @@ exports.init = () => {
         ASSOCIATE_MEMBER_STR = php_var.associate_member_str;
         FULL_MEMBER_STR = php_var.full_member_str;
     }
-    console.log(ENDPOINT_BASE);
+    console.log(ALPHA_NUM_ARR);
     CONTAINER = document.querySelector('.memberpage') || document.createElement('section');
     MEMBER_TYPE = CONTAINER.classList.contains('full-member') ? 'full' : 'associate';
 
     renderAlpha();
 
-    const orgContainer = document.createElement('div');
-    orgContainer.classList.add('organisations');
-    CONTAINER.appendChild(orgContainer);
-
-    ENDPOINT_BASE += `?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=title&order=asc&per_page=${PER_PAGE}`;
+    ENDPOINT_BASE += `?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=${CATEGORY_DATA[MEMBER_TYPE].orderby}&order=asc&per_page=${PER_PAGE}`;
     fetchData(ENDPOINT_BASE, fetchCallBack);
 }
 
@@ -77,8 +78,7 @@ function fetchCallBack(data) {
 }
 
 function renderAlpha() {
-    const alphaArr = [...Array(26)].map((val, i) => String.fromCharCode(i + 65));
-    const alphaArrWithNum = [...alphaArr, 'Num'];
+    const alphaArrWithNum = [...ALPHA_ARR, 'Num'];
     const alphaContainer = document.createElement('div');
     alphaContainer.classList.add('alpha');
 
@@ -118,7 +118,6 @@ function renderAlpha() {
 }
 
 function renderOrganisations (data) {
-    const orgContainer = document.querySelector('.organisations');
     data.forEach(post => {
 
         const orgElement = document.createElement('div');
@@ -129,10 +128,10 @@ function renderOrganisations (data) {
         orgElement.classList.add('clickable_organisation');
 
         const titleStartWith = post.title.rendered.charAt(0);
-        const firstLetter = isNaN(titleStartWith) ?
+        const firstLetterClass = isNaN(titleStartWith) ?
             `${titleStartWith}char` :
             'Numchar';
-        orgElement.classList.add(firstLetter);
+        orgElement.classList.add(firstLetterClass);
 
         orgElement.setAttribute('data-categories', post.meta.member_type);
 
@@ -191,7 +190,6 @@ function renderOrganisations (data) {
         descBoxContainer.appendChild(descBoxElement);
         // end of desc box
 
-        orgContainer.appendChild(orgElement);
         orgElement.appendChild(logoContainer);
         orgElement.appendChild(descBoxContainer);
 
@@ -209,5 +207,24 @@ function renderOrganisations (data) {
             }
 
         }, false);
+
+        let orgContainer;
+        if (MEMBER_TYPE === 'associate' && CONTAINER.querySelector(`.${firstLetterClass}`)) {
+            orgContainer = CONTAINER.querySelector(`.${firstLetterClass}`).parentNode;
+        } else if (MEMBER_TYPE === 'full' && CONTAINER.querySelector(`.${post.meta.country.replace(/\W/g, '')}`)) {
+            orgContainer = CONTAINER.querySelector(`.${post.meta.country.replace(/\W/g, '')}`);
+        } else {
+            orgContainer = document.createElement('div');
+            orgContainer.classList.add('organisations');
+            if (MEMBER_TYPE === 'full') {
+                const countryNameContainer = document.createElement('h3');
+                countryNameContainer.classList.add('countryname', `${contryLetter}ctry`);
+                countryNameContainer.innerHTML = post.meta.country;
+                CONTAINER.appendChild(countryNameContainer);
+                orgContainer.classList.add(post.meta.country.replace(/\W/g, ''));
+            }
+            CONTAINER.appendChild(orgContainer);
+        }
+        orgContainer.appendChild(orgElement);
     });
 }
