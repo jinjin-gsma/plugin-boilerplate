@@ -12,14 +12,17 @@ const CATEGORY_DATA = {
         toggleClass: 'showcountry'
     }
 };
-const ENDPOINT_BASE = `${window.location.protocol}//${window.location.hostname}/membership/wp-json/wp/v2/organisation/`; 
+const PER_PAGE = 48;
+let ENDPOINT_BASE = `${window.location.protocol}//${window.location.hostname}/membership/wp-json/wp/v2/organisation/`;
 let CONTAINER;
 let MEMBER_TYPE = 'associate';
 let DEFAULT_LOGO = '';
 let ASSOCIATE_MEMBER_STR = '';
 let FULL_MEMBER_STR = '';
- 
-exports.init = () => {   
+let TOTAL_PAGES = 0;
+let CURRENT_PAGE = 1;
+
+exports.init = () => {
     if (typeof php_var !== 'undefined') {
         console.log(php_var);
         DEFAULT_LOGO = php_var.default_logo;
@@ -30,31 +33,47 @@ exports.init = () => {
     CONTAINER = document.querySelector('.memberpage') || document.createElement('section');
     MEMBER_TYPE = CONTAINER.classList.contains('full-member') ? 'full' : 'associate';
 
-    const endpoint = `${ENDPOINT_BASE}?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=title&order=asc&per_page=12`;
-    fetchData(endpoint);
-    
     renderAlpha();
+
+    const orgContainer = document.createElement('div');
+    orgContainer.classList.add('organisations');
+    CONTAINER.appendChild(orgContainer);
+
+    ENDPOINT_BASE += `?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=title&order=asc&per_page=${PER_PAGE}`;
+    fetchData(ENDPOINT_BASE, fetchCallBack);
 }
 
-function fetchData(API) {
+function fetchData(API, callback) {
     fetch(API)
         .then(
             (res) => {
                 console.log(res.headers.get('x-wp-total'));
-                console.log(res.headers.get('x-wp-totalpages'));              
+                !TOTAL_PAGES && (TOTAL_PAGES = res.headers.get('x-wp-totalpages'));
+                console.log(res.headers.get('x-wp-totalpages'));
                 return res.json();
             }
         )
         .then(
             (result) => {
-              console.log(result);
-              renderOrganisations(result);
-              renderAlpha();
+                console.log(result);
+                callback(result);
             },
             (error) => {
-              console.log(error);
+                console.log(error);
             }
         )
+}
+
+function fetchCallBack(data) {
+    renderOrganisations(data);
+
+    CURRENT_PAGE += 1;
+    if (CURRENT_PAGE <= TOTAL_PAGES) {
+        const endpoint = `${ENDPOINT_BASE}&page=${CURRENT_PAGE}`;
+        fetchData(endpoint, fetchCallBack);
+    } else {
+        renderAlpha();
+    }
 }
 
 function renderAlpha() {
@@ -62,7 +81,7 @@ function renderAlpha() {
     const alphaArrWithNum = [...alphaArr, 'Num'];
     const alphaContainer = document.createElement('div');
     alphaContainer.classList.add('alpha');
-    
+
     alphaArrWithNum.forEach((element) => {
         const letter = document.createElement('div');
         letter.setAttribute('class', `alphachar alpha${element}`);
@@ -70,9 +89,18 @@ function renderAlpha() {
         alphaContainer.appendChild(letter);
 
         letter.addEventListener('click', () => {
-            const selectedLetter = alphaContainer.querySelector('.activechar');
-            selectedLetter && selectedLetter.classList.remove('activechar');
-            letter.classList.add('activechar');
+            const selectedLetterArr = CONTAINER.querySelectorAll('.activechar');
+            if (selectedLetterArr.length > 0) {
+                selectedLetterArr.forEach(el => {
+                    el.classList.remove('activechar');
+                })
+            }
+            const newSelectedLetterArr = CONTAINER.querySelectorAll(`.alphachar.alpha${element}`);
+            if (newSelectedLetterArr.length > 0) {
+                newSelectedLetterArr.forEach(el => {
+                    el.classList.add('activechar');
+                })
+            }
 
             const shownOrgArr = document.querySelectorAll(`.${CATEGORY_DATA[MEMBER_TYPE].toggleClass}`);
             shownOrgArr.forEach(org => {
@@ -90,9 +118,7 @@ function renderAlpha() {
 }
 
 function renderOrganisations (data) {
-    const orgContainer = document.createElement('div');
-    orgContainer.classList.add('organisations');
-
+    const orgContainer = document.querySelector('.organisations');
     data.forEach(post => {
 
         const orgElement = document.createElement('div');
@@ -103,7 +129,7 @@ function renderOrganisations (data) {
         orgElement.classList.add('clickable_organisation');
 
         const titleStartWith = post.title.rendered.charAt(0);
-        const firstLetter = isNaN(titleStartWith) ? 
+        const firstLetter = isNaN(titleStartWith) ?
             `${titleStartWith}char` :
             'Numchar';
         orgElement.classList.add(firstLetter);
@@ -118,7 +144,7 @@ function renderOrganisations (data) {
         const logoContainer = document.createElement('div');
         logoContainer.classList.add('organisation_logo');
         const logoElement = document.createElement('img');
-        const logo = post.meta.logo && post.meta.logo.url ? 
+        const logo = post.meta.logo && post.meta.logo.url ?
             post.meta.logo.sizes.medium :
             DEFAULT_LOGO;
         logoElement.setAttribute('src', logo);
@@ -129,7 +155,7 @@ function renderOrganisations (data) {
         descBoxContainer.setAttribute('class', `descbox descbox-${post.id}`);
         const descBoxElement = document.createElement('div');
         descBoxElement.classList.add('descbox_inner');
-        
+
         const memberType = post.meta.member_type;
         descBoxElement.innerHTML = `<h3>${post.title.rendered}</h3>`
         if (memberType !== '0') {
@@ -176,13 +202,12 @@ function renderOrganisations (data) {
                 selectedOrg.classList.remove('show_descbox');
                 selectedOrg.querySelector('.descbox.show_descbox').classList.remove('show_descbox');
                 descBoxContainer.classList.toggle('show_descbox');
-                orgElement.classList.toggle('show_descbox');                
+                orgElement.classList.toggle('show_descbox');
             } else if (!selectedOrg || selectedOrg === orgElement) {
                 descBoxContainer.classList.toggle('show_descbox');
-                orgElement.classList.toggle('show_descbox');                
+                orgElement.classList.toggle('show_descbox');
             }
 
         }, false);
-    });    
-    CONTAINER.appendChild(orgContainer);
+    });
 }
