@@ -66,8 +66,8 @@ add_filter('rest_endpoints', function ($routes) {
 function filter_rest_organisation_query($query_vars, $request) {
     $orderby = $request->get_param('orderby');
     if (isset($orderby) && $orderby === 'country') {
-        $query_vars["orderby"] = "meta_value";
-        $query_vars["meta_key"] = "country";
+        $query_vars['orderby'] = 'meta_value title';
+        $query_vars['meta_key'] = 'country';
     }
     return $query_vars;
 }
@@ -79,7 +79,7 @@ function plugin_moat_scripts() {
      wp_localize_script('plugin_moat', 'php_var', array(
             'full_member_str'      => __($GLOBALS['string_is_gsma_full_member']),
             'associate_member_str' => __($GLOBALS['string_is_gsma_associate_member']),
-            'default_logo'         => __(get_template_directory_uri() . "/images/organisation_default.jpg")
+            'default_logo'         => __(get_template_directory_uri() . '/images/organisation_default.jpg')
         )
     );
 }

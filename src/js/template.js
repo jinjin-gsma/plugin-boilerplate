@@ -6,12 +6,14 @@ const CATEGORY_DATA = {
     associate: {
         taxID: 4543,
         toggleClass: 'showchar',
+        classBase: 'char',
         orderby: 'title'
     },
     full: {
         taxID: 4544,
         toggleClass: 'showcountry',
-        orderby: 'country'
+        classBase: 'ctry',
+        orderby: 'country',
     }
 };
 const PER_PAGE = 48;
@@ -106,7 +108,7 @@ function renderAlpha() {
             shownOrgArr.forEach(org => {
                 org.classList.remove(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
             });
-            const selectedOrgArr = document.querySelectorAll(`.${element}char`);
+            const selectedOrgArr = document.querySelectorAll(`.${element + CATEGORY_DATA[MEMBER_TYPE].classBase}`);
             selectedOrgArr.forEach(org => {
                 org.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
             });
@@ -138,7 +140,7 @@ function renderOrganisations (data) {
         orgElement.setAttribute('id', `post-${post.id}`);
 
         // display all orgs to start
-        orgElement.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
+        !CONTAINER.querySelector('.activechar') && orgElement.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
 
         const logoContainer = document.createElement('div');
         logoContainer.classList.add('organisation_logo');
@@ -219,6 +221,8 @@ function renderOrganisations (data) {
             if (MEMBER_TYPE === 'full') {
                 const countryNameContainer = document.createElement('h3');
                 countryNameContainer.classList.add('countryname', `${contryLetter}ctry`);
+                !CONTAINER.querySelector('.activechar') && countryNameContainer.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
+
                 countryNameContainer.innerHTML = post.meta.country;
                 CONTAINER.appendChild(countryNameContainer);
                 orgContainer.classList.add(post.meta.country.replace(/\W/g, ''));
