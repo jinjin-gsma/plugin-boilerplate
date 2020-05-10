@@ -1,24 +1,12 @@
-/*global php_var, exports*/
-
-const MEMBER_TYPE_OPEN_TAG = '<p class="organisation_member_type"><a href="/membership/membership-types/?utm_source=blog&utm_medium=display&utm_campaign=membership" title="click for information on GSMA Membership">';
-const MEMBER_TYPE_CLOSE_TAG = '</a></p>';
-const CATEGORY_DATA = {
-    associate: {
-        taxID: 4543,
-        toggleClass: 'showchar',
-        classBase: 'char',
-        orderby: 'title'
-    },
-    full: {
-        taxID: 4544,
-        toggleClass: 'showcountry',
-        classBase: 'ctry',
-        orderby: 'country',
-    }
-};
-const PER_PAGE = 48;
-const ALPHA_ARR = [...Array(26)].map((val, i) => String.fromCharCode(i + 65));
-const ALPHA_NUM_ARR = ['num', ...ALPHA_ARR];
+/*global php_var*/
+import {
+    ALPHA_ARR,
+    MEMBER_TYPE_OPEN_TAG,
+    MEMBER_TYPE_CLOSE_TAG,
+    CATEGORY_DATA,
+    PER_PAGE,
+    ALPHA_NUM_ARR
+} from './constants.js';
 
 let ENDPOINT_BASE = `${window.location.protocol}//${window.location.hostname}/membership/wp-json/wp/v2/organisation/`;
 let CONTAINER;
@@ -28,8 +16,9 @@ let ASSOCIATE_MEMBER_STR = '';
 let FULL_MEMBER_STR = '';
 let TOTAL_PAGES = 0;
 let CURRENT_PAGE = 1;
+let ACTIVE_CHAR = '';
 
-exports.init = () => {
+export function init() {
     if (typeof php_var !== 'undefined') {
         console.log(php_var);
         DEFAULT_LOGO = php_var.default_logo;
@@ -40,6 +29,7 @@ exports.init = () => {
     CONTAINER = document.querySelector('.memberpage') || document.createElement('section');
     MEMBER_TYPE = CONTAINER.classList.contains('full-member') ? 'full' : 'associate';
 
+    renderAlpha();
     renderAlpha();
 
     ENDPOINT_BASE += `?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=${CATEGORY_DATA[MEMBER_TYPE].orderby}&order=asc&per_page=${PER_PAGE}`;
@@ -74,8 +64,6 @@ function fetchCallBack(data) {
     if (CURRENT_PAGE <= TOTAL_PAGES) {
         const endpoint = `${ENDPOINT_BASE}&page=${CURRENT_PAGE}`;
         fetchData(endpoint, fetchCallBack);
-    } else {
-        renderAlpha();
     }
 }
 
@@ -103,6 +91,7 @@ function renderAlpha() {
                     el.classList.add('activechar');
                 })
             }
+            ACTIVE_CHAR = element;
 
             const shownOrgArr = document.querySelectorAll(`.${CATEGORY_DATA[MEMBER_TYPE].toggleClass}`);
             shownOrgArr.forEach(org => {
@@ -125,8 +114,8 @@ function renderOrganisations (data) {
         const orgElement = document.createElement('div');
         orgElement.classList.add('aorganisation');
 
-        const contryLetter = post.meta.country ? post.meta.country.charAt(0).toUpperCase() : '';
-        orgElement.classList.add(`${contryLetter}ctry`);
+        const countryLetter = post.meta.country ? post.meta.country.charAt(0).toUpperCase() : '';
+        orgElement.classList.add(`${countryLetter}ctry`);
         orgElement.classList.add('clickable_organisation');
 
         const titleStartWith = post.title.rendered.charAt(0);
@@ -140,7 +129,12 @@ function renderOrganisations (data) {
         orgElement.setAttribute('id', `post-${post.id}`);
 
         // display all orgs to start
-        !CONTAINER.querySelector('.activechar') && orgElement.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
+        if (!ACTIVE_CHAR ||
+            MEMBER_TYPE === 'full' && ACTIVE_CHAR === countryLetter ||
+            MEMBER_TYPE === 'associate' && ACTIVE_CHAR === titleStartWith)
+        {
+            orgElement.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
+        }
 
         const logoContainer = document.createElement('div');
         logoContainer.classList.add('organisation_logo');
@@ -218,16 +212,19 @@ function renderOrganisations (data) {
         } else {
             orgContainer = document.createElement('div');
             orgContainer.classList.add('organisations');
+
             if (MEMBER_TYPE === 'full') {
                 const countryNameContainer = document.createElement('h3');
-                countryNameContainer.classList.add('countryname', `${contryLetter}ctry`);
-                !CONTAINER.querySelector('.activechar') && countryNameContainer.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
+                countryNameContainer.classList.add('countryname', `${countryLetter}ctry`);
+                if (!ACTIVE_CHAR || ACTIVE_CHAR === countryLetter) {
+                    countryNameContainer.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
+                }
 
                 countryNameContainer.innerHTML = post.meta.country;
-                CONTAINER.appendChild(countryNameContainer);
+                CONTAINER.insertBefore(countryNameContainer, CONTAINER.lastChild);
                 orgContainer.classList.add(post.meta.country.replace(/\W/g, ''));
             }
-            CONTAINER.appendChild(orgContainer);
+            CONTAINER.insertBefore(orgContainer, CONTAINER.lastChild);
         }
         orgContainer.appendChild(orgElement);
     });
