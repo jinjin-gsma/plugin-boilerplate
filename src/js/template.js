@@ -30,7 +30,6 @@ export function init() {
     MEMBER_TYPE = CONTAINER.classList.contains('full-member') ? 'full' : 'associate';
 
     renderAlpha();
-    renderAlpha();
 
     ENDPOINT_BASE += `?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=${CATEGORY_DATA[MEMBER_TYPE].orderby}&order=asc&per_page=${PER_PAGE}`;
     fetchData(ENDPOINT_BASE, fetchCallBack);
@@ -59,6 +58,8 @@ function fetchData(API, callback) {
 
 function fetchCallBack(data) {
     renderOrganisations(data);
+
+    CURRENT_PAGE === 1 && renderAlpha();
 
     CURRENT_PAGE += 1;
     if (CURRENT_PAGE <= TOTAL_PAGES) {
@@ -221,10 +222,14 @@ function renderOrganisations (data) {
                 }
 
                 countryNameContainer.innerHTML = post.meta.country;
-                CONTAINER.insertBefore(countryNameContainer, CONTAINER.lastChild);
+                CURRENT_PAGE === 1 ?
+                    CONTAINER.appendChild(countryNameContainer) :
+                    CONTAINER.insertBefore(countryNameContainer, CONTAINER.lastChild);
                 orgContainer.classList.add(post.meta.country.replace(/\W/g, ''));
             }
-            CONTAINER.insertBefore(orgContainer, CONTAINER.lastChild);
+            CURRENT_PAGE === 1 ?
+                CONTAINER.appendChild(orgContainer) :
+                CONTAINER.insertBefore(orgContainer, CONTAINER.lastChild);
         }
         orgContainer.appendChild(orgElement);
     });

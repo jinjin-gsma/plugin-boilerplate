@@ -15,5 +15,5 @@ export const CATEGORY_DATA = {
         orderby: 'country',
     }
 };
-export const PER_PAGE = 48;
+export const PER_PAGE = 60;
 export const ALPHA_NUM_ARR = ['num', ...ALPHA_ARR];
