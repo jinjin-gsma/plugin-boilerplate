@@ -1,3 +1,4 @@
-import {init} from './template';
+import {Template} from './Template';
 
-init();
+const template = new Template();
+template.init();

@@ -1,4 +1,4 @@
-import {ALPHA_ARR} from './constants.js';
+import {ALPHA_ARR} from './constants';
 
 export class AlphaGroup {
     constructor(parentNode, toggleClass, classBase) {

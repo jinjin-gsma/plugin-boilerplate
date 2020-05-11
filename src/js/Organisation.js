@@ -2,7 +2,7 @@
 import {
     MEMBER_TYPE_OPEN_TAG,
     MEMBER_TYPE_CLOSE_TAG
-} from './constants.js';
+} from './constants';
 
 let DEFAULT_LOGO;
 let ASSOCIATE_MEMBER_STR;
