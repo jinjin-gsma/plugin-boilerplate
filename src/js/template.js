@@ -1,12 +1,11 @@
 /*global php_var*/
 import {
-    ALPHA_ARR,
     MEMBER_TYPE_OPEN_TAG,
     MEMBER_TYPE_CLOSE_TAG,
     CATEGORY_DATA,
-    PER_PAGE,
-    ALPHA_NUM_ARR
+    PER_PAGE
 } from './constants.js';
+import {AlphaGroup} from './AlphaGroup.js';
 
 let ENDPOINT_BASE = `${window.location.protocol}//${window.location.hostname}/membership/wp-json/wp/v2/organisation/`;
 let CONTAINER;
@@ -16,7 +15,7 @@ let ASSOCIATE_MEMBER_STR = '';
 let FULL_MEMBER_STR = '';
 let TOTAL_PAGES = 0;
 let CURRENT_PAGE = 1;
-let ACTIVE_CHAR = '';
+let ALPHA_GROUP;
 
 export function init() {
     if (typeof php_var !== 'undefined') {
@@ -25,14 +24,14 @@ export function init() {
         ASSOCIATE_MEMBER_STR = php_var.associate_member_str;
         FULL_MEMBER_STR = php_var.full_member_str;
     }
-    console.log(ALPHA_NUM_ARR);
     CONTAINER = document.querySelector('.memberpage') || document.createElement('section');
     MEMBER_TYPE = CONTAINER.classList.contains('full-member') ? 'full' : 'associate';
 
-    renderAlpha();
+    ALPHA_GROUP = new AlphaGroup(CONTAINER, CATEGORY_DATA[MEMBER_TYPE].toggleClass, CATEGORY_DATA[MEMBER_TYPE].classBase);
+    ALPHA_GROUP.render();
 
     ENDPOINT_BASE += `?organisation_categories=${CATEGORY_DATA[MEMBER_TYPE].taxID}&orderby=${CATEGORY_DATA[MEMBER_TYPE].orderby}&order=asc&per_page=${PER_PAGE}`;
-    fetchData(ENDPOINT_BASE, fetchCallBack);
+    fetchData(ENDPOINT_BASE, fetchCallback);
 }
 
 function fetchData(API, callback) {
@@ -56,57 +55,16 @@ function fetchData(API, callback) {
         )
 }
 
-function fetchCallBack(data) {
+function fetchCallback(data) {
     renderOrganisations(data);
 
-    CURRENT_PAGE === 1 && renderAlpha();
+    CURRENT_PAGE === 1 && ALPHA_GROUP.render();
 
     CURRENT_PAGE += 1;
     if (CURRENT_PAGE <= TOTAL_PAGES) {
         const endpoint = `${ENDPOINT_BASE}&page=${CURRENT_PAGE}`;
-        fetchData(endpoint, fetchCallBack);
+        fetchData(endpoint, fetchCallback);
     }
-}
-
-function renderAlpha() {
-    const alphaArrWithNum = [...ALPHA_ARR, 'Num'];
-    const alphaContainer = document.createElement('div');
-    alphaContainer.classList.add('alpha');
-
-    alphaArrWithNum.forEach((element) => {
-        const letter = document.createElement('div');
-        letter.setAttribute('class', `alphachar alpha${element}`);
-        letter.innerHTML = (element === 'Num' ? '#' : element);
-        alphaContainer.appendChild(letter);
-
-        letter.addEventListener('click', () => {
-            const selectedLetterArr = CONTAINER.querySelectorAll('.activechar');
-            if (selectedLetterArr.length > 0) {
-                selectedLetterArr.forEach(el => {
-                    el.classList.remove('activechar');
-                })
-            }
-            const newSelectedLetterArr = CONTAINER.querySelectorAll(`.alphachar.alpha${element}`);
-            if (newSelectedLetterArr.length > 0) {
-                newSelectedLetterArr.forEach(el => {
-                    el.classList.add('activechar');
-                })
-            }
-            ACTIVE_CHAR = element;
-
-            const shownOrgArr = document.querySelectorAll(`.${CATEGORY_DATA[MEMBER_TYPE].toggleClass}`);
-            shownOrgArr.forEach(org => {
-                org.classList.remove(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
-            });
-            const selectedOrgArr = document.querySelectorAll(`.${element + CATEGORY_DATA[MEMBER_TYPE].classBase}`);
-            selectedOrgArr.forEach(org => {
-                org.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
-            });
-
-        }, false);
-    });
-
-    CONTAINER.appendChild(alphaContainer);
 }
 
 function renderOrganisations (data) {
@@ -130,9 +88,10 @@ function renderOrganisations (data) {
         orgElement.setAttribute('id', `post-${post.id}`);
 
         // display all orgs to start
-        if (!ACTIVE_CHAR ||
-            MEMBER_TYPE === 'full' && ACTIVE_CHAR === countryLetter ||
-            MEMBER_TYPE === 'associate' && ACTIVE_CHAR === titleStartWith)
+        const activeChar = ALPHA_GROUP.activeChar;
+        if (!activeChar ||
+            MEMBER_TYPE === 'full' && activeChar === countryLetter ||
+            MEMBER_TYPE === 'associate' && activeChar === titleStartWith)
         {
             orgElement.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
         }
@@ -217,7 +176,7 @@ function renderOrganisations (data) {
             if (MEMBER_TYPE === 'full') {
                 const countryNameContainer = document.createElement('h3');
                 countryNameContainer.classList.add('countryname', `${countryLetter}ctry`);
-                if (!ACTIVE_CHAR || ACTIVE_CHAR === countryLetter) {
+                if (!activeChar || activeChar === countryLetter) {
                     countryNameContainer.classList.add(CATEGORY_DATA[MEMBER_TYPE].toggleClass);
                 }
 

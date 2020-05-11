@@ -16,4 +16,3 @@ export const CATEGORY_DATA = {
     }
 };
 export const PER_PAGE = 60;
-export const ALPHA_NUM_ARR = ['num', ...ALPHA_ARR];
