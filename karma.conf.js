@@ -1,19 +1,20 @@
 module.exports = function (config) {
   config.set({
     basePath: '',
-    exclude: [],
+    exclude: ['src/js/index.js'],
     files: [
+      { pattern: 'src/js/*.js', watched: true, served: true, included: true },
       { pattern: 'tests/*.js', watched: true, served: true, included: true }
     ],
- 
-    autoWatch: true,
-    singleRun: false,
+
+    autoWatch: false,
+    singleRun: true,
     failOnEmptyTestSuite: false,
     logLevel: config.LOG_WARN,
     frameworks: ['jasmine'],
     browsers: ['Chrome'],
-    reporters: ['mocha', 'kjhtml'],
- 
+    reporters: ['mocha', 'kjhtml', 'progress', 'coverage'],
+
     listenAddress: '0.0.0.0',
     hostname: 'localhost',
     port: 9876,
@@ -21,7 +22,7 @@ module.exports = function (config) {
     browserDisconnectTimeout: 5000,
     browserNoActivityTimeout: 10000,
     captureTimeout: 60000,
- 
+
     client: {
       captureConsole: true,
       clearContext: false,
@@ -31,7 +32,7 @@ module.exports = function (config) {
         random: false
       }
     },
- 
+
     webpack: {
       module: {
         rules: [
@@ -47,15 +48,27 @@ module.exports = function (config) {
       }
     },
     preprocessors: {
-      './tests/*.js': ['webpack']
+      'src/js/*.js': ['webpack', 'coverage'],
+      'tests/*.js': ['webpack']
     },
     webpackMiddleware: {
       noInfo: true,
       stats: 'errors-only'
     },
- 
+
     mochaReporter: {
       output: 'noFailures'
+    },
+
+    colors: true,
+
+    coverageReporter: {
+        includeAllSources: true,
+        dir: 'coverage/',
+        reporters: [
+            { type: 'html', subdir: 'html' },
+            { type: 'text-summary' }
+        ]
     }
   });
 };

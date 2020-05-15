@@ -15,13 +15,12 @@ pipeline {
         }
         stage('Lint') {
             steps {
-                unstash 'node_modules'
-                echo 'Linting'
+                sh 'npm run lint'
             }
         }
         stage('Test') {
             steps {
-                echo 'Testing'
+                sh 'npm run test'
             }
         }
     }
