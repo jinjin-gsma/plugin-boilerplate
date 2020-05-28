@@ -1,3 +1,3 @@
-FROM php:7.3.11
+FROM mattrayner/lamp:latest-1804
 
-RUN apt-get update && apt-get install -y subversion && apt-get install mysql-server
+RUN apt-get update && apt-get install -y subversion
