@@ -25,5 +25,6 @@ function _manually_load_plugin() {
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
+putenv('WP_TESTS_SKIP_INSTALL=1');
 // Start up the WP testing environment.
-// require $_tests_dir . '/includes/bootstrap.php';
+require $_tests_dir . '/includes/bootstrap.php';
