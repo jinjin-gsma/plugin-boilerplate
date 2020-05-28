@@ -1,3 +1,3 @@
-FROM node:7-alpine
+FROM php
 
-RUN apk add -U subversion && apk add bash
+RUN apk add -U subversion
