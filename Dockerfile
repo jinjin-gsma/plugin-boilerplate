@@ -1,3 +1,3 @@
 FROM php
 
-RUN apk add -U subversion
+RUN apt-get update && apt-get install -y subversion
