@@ -1,13 +1,8 @@
 {
-  "name": "plugin_membership_operator_associate_templates",
+  "name": <%= pluginName %>,
   "version": "1.0.0",
-  "description": "Associate and Full member templates for GSMA.com Membership site. Uses Sass.",
+  "description": "",
   "main": "index.js",
-  "babel": {
-    "presets": [
-      "@babel/preset-env"
-    ]
-  },
   "scripts": {
     "watch": "webpack --mode=development --watch --config webpack.config.js",
     "build": "webpack --mode=production --config webpack.config.js",
